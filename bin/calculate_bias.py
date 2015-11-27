@@ -28,6 +28,27 @@ def run( cmd ):
   bias.log_stderr( cmd )
   os.system( cmd )
 
+def index( mapper, fasta ):
+  if mapper == 'bwa':
+    run( '%s index %s' % ( BWA_PATH, fasta ) )
+  elif mapper == 'bowtie2':
+    run( '%s-build %s %s-bt2' % ( BOWTIE_PATH, fasta, fasta ) )
+
+def align( mapper, fasta, fastq, sam ):
+  if mapper == 'bwa':
+    run( '%s mem -t 8 %s %s > %s' % ( BWA_PATH, donor, fastq, sam ) )
+  elif mapper == 'bowtie2':
+    run( '%s --local -p 16 -x %s-bt2 -U %s --quiet -S %s' % ( BOWTIE_PATH, fasta, fastq, sam ) ) # -t adds time
+
+def find_sequence_len( fh ):
+  # look for @SQ SN:tiny2  LN:2310
+  for line in fh:
+    for fragment in line.strip().split():
+      if fragment.startswith('LN:'):
+        return int( fragment.split(':',2)[-1] )
+  # not found
+  return 0
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Compare BAMs')
   parser.add_argument('--donor', help='donor fasta')
@@ -35,6 +56,7 @@ if __name__ == '__main__':
   parser.add_argument('--job', required=False, help='use to continue previous pipeline')
   parser.add_argument('--start', required=False, help='start from this stage')
   parser.add_argument('--tmpdir', required=False, help='where to write files')
+  parser.add_argument('--align', required=False, default='bwa', help='aligner to use')
   parser.add_argument('fastq', help='fastq files to align')
   args = parser.parse_args()
   # now do each stage...
@@ -56,19 +78,20 @@ if __name__ == '__main__':
   # fasta indexes
   stage = 1
   if start <= stage:
-    run( '%s index %s' % ( BWA_PATH, args.donor ) )
-    run( '%s index %s' % ( BWA_PATH, args.reference ) )
+    index( args.align, args.donor )
+    index( args.align, args.reference )
     bias.log_stderr( 'Stage %i: Indexing completed' % stage )
 
   stage += 1 # 2
   # alignment (aln)
   if start <= stage:
-    run( '%s mem -t 8 %s %s > %s/donor%i.sam' % ( BWA_PATH, args.donor, args.fastq, tmpdir, idx ) )
+    align( args.align, args.donor, args.fastq, '{0}/donor{1}.sam'.format( tmpdir, idx ) )
     bias.log_stderr( 'Stage %i: Donor alignment completed' % stage )
 
   stage += 1 # 3
   if start <= stage:
-    run( '%s mem -t 8 %s %s > %s/reference%i.sam' % ( BWA_PATH, args.reference, args.fastq, tmpdir, idx ) )
+    align( args.align, args.reference, args.fastq, '{0}/reference{1}.sam'.format( tmpdir, idx ) )
+    #run( '%s mem -t 8 %s %s > %s/reference%i.sam' % ( BWA_PATH, args.reference, args.fastq, tmpdir, idx ) )
     bias.log_stderr( 'Stage %i: Reference alignment completed' % stage )
 
   # genome alignment (mauve)
@@ -153,8 +176,9 @@ if __name__ == '__main__':
 
   stage += 1
   if start <= stage:
-    reflen = int( open( '%s/notcovered%i.head' % ( tmpdir, idx ), 'r' ).readline().strip().split(':')[-1] )
-    donorlen = int( open( '%s/remapped%i.head' % ( tmpdir, idx ), 'r' ).readline().strip().split(':')[-1] )
+    # find @SQ SN:tiny2  LN:2310
+    reflen = find_sequence_len( open( '%s/notcovered%i.head' % ( tmpdir, idx ), 'r' ) ) 
+    donorlen = find_sequence_len( open( '%s/remapped%i.head' % ( tmpdir, idx ), 'r' ) )
     print "===== Stats ====="
     # reads
     print "-- Reads --"
