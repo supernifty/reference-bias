@@ -9,8 +9,8 @@ config = {
     'url': 'https://github.com/supernifty/reference-bias',
     'version': '0.1',
     'install_requires': ['nose'],
-    'packages': ['reference_bias'],
-    'scripts': [],
+    'packages': ['bias'],
+    'scripts': [ 'bin/calculate_bias.py' ],
     'name': 'reference-bias'
 }
 
