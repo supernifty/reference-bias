@@ -57,6 +57,8 @@ if __name__ == '__main__':
   parser.add_argument('--start', required=False, help='start from this stage')
   parser.add_argument('--tmpdir', required=False, help='where to write files')
   parser.add_argument('--align', required=False, default='bwa', help='aligner to use')
+  parser.add_argument('--donorbam', required=False, help='specify a previously aligned donor bam')
+  parser.add_argument('--donorsam', required=False, help='specify a previously aligned donor sam')
   parser.add_argument('fastq', help='fastq files to align')
   args = parser.parse_args()
   # now do each stage...
@@ -85,7 +87,8 @@ if __name__ == '__main__':
   stage += 1 # 2
   # alignment (aln)
   if start <= stage:
-    align( args.align, args.donor, args.fastq, '{0}/donor{1}.sam'.format( tmpdir, idx ) )
+    if not args.donorsam:
+      align( args.align, args.donor, args.fastq, '{0}/donor{1}.sam'.format( tmpdir, idx ) )
     bias.log_stderr( 'Stage %i: Donor alignment completed' % stage )
 
   stage += 1 # 3
@@ -110,16 +113,22 @@ if __name__ == '__main__':
     bias.remap_bam( xmfa='{0}/mauve{1}'.format( tmpdir, idx ), origin=2, target=1, output_not_covered='{0}/notcovered{1}.sam'.format( tmpdir, idx ), output_target_coverage='{0}/mauve_target{1}.bed'.format( tmpdir, idx ), output='{0}/remapped{1}.sam'.format(tmpdir, idx), new_reference=donor_accession, remap_cigar=False, bam='{0}/reference{1}.sam'.format( tmpdir, idx ), out_fh=open( '{0}/remap_bam{1}.stats'.format( tmpdir, idx ), 'w' ), bam_to_sam=BAM_TO_SAM )
     bias.log_stderr( 'Stage %i: Remap completed' % stage )
 
-  # converto to bam
+  # convert to bam
   stage += 1 # 6
   if start <= stage:
-    run( 'samtools view -bS %s/donor%i.sam > %s/donor%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
-    #run( 'ln -s %s/donor.bam %s/donor%i.bam' % ( tmpdir, tmpdir, idx ) ) # use if already have donor bam
+    if args.donorbam:
+      run( 'ln -s {0} {1}/donor{2}.bam' % ( args.donorbam, tmpdir, idx ) ) # use if already have donor bam
+    else:
+      run( 'samtools view -bS %s/donor%i.sam > %s/donor%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
     run( 'samtools view -bS %s/reference%i.sam > %s/reference%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
     # fix remapped
-    with open( '%s/donor%i.sam' % ( tmpdir, idx ), 'r' ) as dfh:
-    #with open( '%s/donor.sam' % ( tmpdir, idx ), 'r' ) as dfh: # use if already have donor bam
-      l = (dfh.readline(), dfh.readline())
+    if args.donorsam:
+      with open( '%s/donor.sam' % ( tmpdir, idx ), 'r' ) as dfh: # use if already have donor bam
+        l = (dfh.readline(), dfh.readline())
+    else:
+      with open( '%s/donor%i.sam' % ( tmpdir, idx ), 'r' ) as dfh:
+        l = (dfh.readline(), dfh.readline())
+
     with open( '%s/remapped%i.head' % ( tmpdir, idx ), 'w' ) as rfh:
       rfh.write( l[0] )
       rfh.write( l[1] )

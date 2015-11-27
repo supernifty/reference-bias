@@ -1,5 +1,5 @@
 from nose.tools import *
-import reference_bias
+import bias
 
 def setup():
     print "setup"
