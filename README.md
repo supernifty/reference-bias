@@ -12,10 +12,11 @@ Methods for quantifying reference bias in resequencing
 
 ## Dependencies
 
-* bedtools
+* bedtools - http://bedtools.readthedocs.org/en/latest/
 * bwa or bowtie2
-* progressiveMauve
-* samtools
+* datamash - https://www.gnu.org/software/datamash/
+* progressiveMauve - http://darlinglab.org/mauve/mauve.html
+* samtools (v1.2+ recommended) - https://github.com/samtools
 
 ## Usage
 
