@@ -1,5 +1,6 @@
 
 from bio import *
+from calculate import *
 from compare_bams import *
 from extract_mismatched_reads import *
 from mauve import *

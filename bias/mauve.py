@@ -122,7 +122,7 @@ class MauveMap( object ):
     self.stats = { 'total': 0, 'unmapped': 0, 'mapped': 0, 'reads_covered': 0, 'reads_notcovered': 0, 'reads_partial': 0 }
     for pos, line in enumerate(sam_fh):
       line = line.strip()
-      if line.startswith('@'):
+      if line.startswith('@'): # header
         if self.new_reference is None:
           output.write( '%s\n' % line )
         elif self.new_reference is not None and line.startswith( '@SQ' ) and line.find( 'SN:') != -1:
@@ -133,7 +133,7 @@ class MauveMap( object ):
           output.write( '%s\n' % line )
         continue
       fields = line.split()
-      if len(fields) > 9:
+      if len(fields) > 9: # aligned read
         #print fields
         if self.new_reference is not None:
           fields[2] = self.new_reference
