@@ -121,7 +121,9 @@ class Calculator (object):
   
       #self.run( 'bedtools genomecov -ibam %s/donor%i.bam -bga | awk \'$4<1\' | awk \'{ print $3-$2; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/donor%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
       self.run( 'bedtools genomecov -ibam {0} -bga | awk \'$4<1\' > {1}/donornotcovered{2}.bed'.format( target_donorbam, tmpdir, idx ) )
+      # summary of regions that aren't covered on the donor
       self.run( 'awk \'$4<1\' %s/donornotcovered%i.bed | awk \'{ print $3-$2; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/donor%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
+      # summary of regions that aren't covered on the reference
       self.run( 'bedtools genomecov -ibam %s/reference%i.bam -bga | awk \'$4<1\' | awk \'{ print $3-$2; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/reference%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
       self.run( 'bedtools genomecov -ibam %s/remapped%i.bam -bga | awk \'$4<1\' | awk \'{ print $3-$2; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/remapped%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
       self.run( 'bedtools genomecov -ibam {0} -d | awk \'$3>0\' | awk \'{{ print $3; }}\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > {1}/donorsum{2}.cov'.format( target_donorbam, tmpdir, idx ) )
@@ -147,7 +149,11 @@ class Calculator (object):
       self.run( 'samtools flagstat %s/almost%i.bam > %s/almostflag%i.txt' % ( tmpdir, idx, tmpdir, idx ) )
       self.run( 'bedtools genomecov -ibam %s/mismatched%i.bam -d | awk \'$3>0\' | awk \'{ print $3; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/mismatched%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
       self.run( 'bedtools genomecov -ibam %s/notcovered%i.bam -d | awk \'$3>0\' | awk \'{ print $3; }\' | datamash sum 1 min 1 max 1 mean 1 pstdev 1 count 1 > %s/notcovered%i.cov' % ( tmpdir, idx, tmpdir, idx ) )
-      self.run( "bedtools intersect -a %s/donornotcovered%i.bed -b %s/mauve_target%i.bed | awk '{t+=$3-$2;} END {print t;}' > %s/notcovered_overlap%i.cov" % ( tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
+      if os.stat('{0}/donornotcovered{1}.bed'.format( tmpdir, idx )).st_size == 0:
+        with open( "{0}/notcovered_overlap{1}.cov".format( tmpdir, idx ), 'w' ) as fh: 
+          fh.write( '0\n' )
+      else:
+        self.run( "bedtools intersect -a %s/donornotcovered%i.bed -b %s/mauve_target%i.bed | awk '{t+=$3-$2;} END {print t;}' > %s/notcovered_overlap%i.cov" % ( tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
   
       self.log( 'Stage %i: Mismatch coverage completed' % stage )
   
@@ -247,12 +253,16 @@ class Calculator (object):
       self.write( "Donor max coverage: %s" % dfs[2] )
   
       rf = open( '%s/reference%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip().split()
+      if len(rf) == 0:
+        rf = (0,0,0,0,0,0)
       self.write( "Reference not covered: %s (%.1f%%)" % ( rf[0], 100. * int(rf[0]) / max( 1, reflen ) ) )
       self.write( "Reference covered: %i (%.1f%%)" % ( reflen - int(rf[0]), 100. * (reflen - int(rf[0])) / max( 1, reflen ) ) )
       self.write( "Reference gaps: %s" % rf[5] )
       self.write( "Reference max gap: %s" % rf[2] )
   
       mf = open( '%s/remapped%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip().split()
+      if len(mf) == 0:
+        mf = (0,0,0,0,0,0)
       self.write( "Remapped not covered: %s (%.1f%%)" % (mf[0], 100. * int(mf[0]) / max( 1, donorlen ) ) )
       self.write( "Remapped covered: %i (%.1f%%)" % (donorlen - int(mf[0]), 100. * (donorlen - int(mf[0]) ) / max( 1, donorlen ) ) )
       self.write( "Remapped gaps: %s" % mf[5] )
