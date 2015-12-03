@@ -10,7 +10,7 @@ config = {
     'version': '0.1',
     'install_requires': ['nose'],
     'packages': ['bias'],
-    'scripts': [ 'bin/calculate_bias.py' ],
+    'scripts': [ 'bin/calculate_bias.py', 'bin/calculate_bias_matrix.py', 'bin/choose_reference.py', 'bin/draw_matrix.py' ],
     'name': 'reference-bias'
 }
 
