@@ -3,7 +3,8 @@
 # generates a chart illustrating the bias as generated from the calculate_bias command
 # also requires a mapping from donor to the label to display on the chart
 # usage
-# python draw_bias.py genome_map results > chart.pdf
+# python draw_bias.py genome_map result_files > chart.pdf
+# result files are expected to end in accession.fasta
 # genome_map has the format:
 # donor_filename,label,category
 
@@ -15,10 +16,9 @@ import pylab
 from matplotlib import rcParams
 
 rcParams.update({'figure.autolayout': True})
-#pylab.rcParams['figure.figsize'] = 8, 6
-pylab.rcParams['figure.figsize'] = 6, 6
 
 def draw_bias( src, targets, out_fh ):
+  #pylab.rcParams['figure.figsize'] = 8, 6
   pylab.rcParams['figure.figsize'] = 6, 6
   fig = plt.figure()
   ax = fig.add_subplot(111)
