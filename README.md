@@ -71,7 +71,7 @@ python ./bin/draw_phylogeny.py ./data/ecoli.map ./results/ecoli.distances.fixed 
 * run the resulting R code to generate the phylogeny
 * gradient.pdf is also generated which represents the colour scale
 
-### Generate bias matrix
+### Bias matrix
 
 #### Example
 
