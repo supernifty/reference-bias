@@ -5,7 +5,7 @@
 # usage
 # python draw_matrix.py genome_map < matrix.out > chart.pdf
 # genome_map has the format:
-# donor_filename,label
+# donor_filename,label,extra
 
 import sys
 
@@ -26,7 +26,7 @@ def genome_sort( gmap ):
 def draw_matrix( in_fh, genome_map, out_fh ):
   gmap = {}
   for line in genome_map:
-    x, y = [ z.strip() for z in line.split(',') ]
+    x, y, rest = [ z.strip() for z in line.split(',') ]
     gmap[x] = y
 
   genomes = set()

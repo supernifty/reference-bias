@@ -103,7 +103,7 @@ class MauveMap( object ):
       if target_base - diff in self.target_map:
         return -diff
       diff += 1
-    return None
+    return max_dist
  
   def find_nearest( self, src_base, max_dist=100000 ):
     diff = 0
@@ -113,7 +113,7 @@ class MauveMap( object ):
       if src_base - diff in self.coverage:
         return -diff
       diff += 1
-    return None
+    return max_dist
     
   def remap( self, sam_fh, output, remap_cigar=False, not_covered_output=None ):
     '''

@@ -319,7 +319,7 @@ class Calculator (object):
     stage += 1
     if start <= stage:
       #self.run( 'rm %s/reference%i.sam %s/mismatched%i.sam %s/remapped%i.sam %s/notcovered%i.sam %s/donor%i.sam' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
-      self.run( 'rm {0}/*'.format( tmpdir ) )
+      #self.run( 'rm {0}/*'.format( tmpdir ) )
       self.log( 'Stage %i: Cleanup finished' % stage )
 
     return bias_low, bias_mid, bias_high
