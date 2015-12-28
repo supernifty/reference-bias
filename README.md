@@ -24,7 +24,9 @@ Methods for quantifying reference bias in resequencing
 ### Bias for a single genome
 
 #### Example
+```
 python ./bin/calculate_bias.py --donor ./data/e-coli-mg1655.fasta --reference ./data/phylogeny/NC_002695.1.fasta --tmpdir ./tmp ./data/SRR892241-ecoli-mg1655_1.fastq.gz --align bwa > results/calculate_bias.mg1655.NC_002695.1.bwa.txt
+```
 
 #### Parameters
 
