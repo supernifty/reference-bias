@@ -1,0 +1,7 @@
+./data/SRR892241-1M.fastq.gz,./data/phylogeny/NC_000913.3.fasta
+./data/SRR1509643-1M.fastq.gz,./data/phylogeny/NC_002655.2.fasta
+./data/SRR931853-1M.fastq.gz,./data/phylogeny/NC_004431.1.fasta
+./data/ERR662805-1M.fastq.gz,./data/phylogeny/NC_007384.1.fasta
+./data/ERR662793-1M.fastq.gz,./data/phylogeny/CM001474.1.fasta
+./data/DRR021348-1M.fastq.gz,./data/phylogeny/AP009048.1.fasta
+./data/SRR959254-1M.fastq.gz,./data/phylogeny/NC_010473.1.fasta
