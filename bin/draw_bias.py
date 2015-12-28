@@ -2,9 +2,12 @@
 #
 # generates a chart illustrating the bias as generated from the calculate_bias command
 # also requires a mapping from donor to the label to display on the chart
+#
 # usage
+# =====
 # python draw_bias.py genome_map result_files > chart.pdf
 # result files are expected to end in accession.fasta
+#
 # genome_map has the format:
 # donor_filename,label,category
 
@@ -23,7 +26,7 @@ def draw_bias( src, targets, out_fh ):
   fig = plt.figure()
   ax = fig.add_subplot(111)
 
-  color_list = ( '', '#603090', '#903030', '#f0a020', '#9090f0', '#f0b0c0', '#b06060', '#f03030', '#30f030', '#f09060', '#607060', '#d0d0d0' )
+  color_list = ( '#ff0000', '#603090', '#903030', '#f0a020', '#9090f0', '#f0b0c0', '#b06060', '#f03030', '#30f030', '#f09060', '#607060', '#d0d0d0' )
   path_list = ( '', 'EAEC', 'STEC', 'ExPEC', 'AIEC', 'EPEC', 'ETEC', 'EHEC', 'Commensal', 'Other', 'Shigellosis', 'Unclassified' )
 
   info = {}
@@ -32,7 +35,7 @@ def draw_bias( src, targets, out_fh ):
     if len(fields) > 2:
       accession = fields[0].split('/')[-1][:-6]
       info[accession] = { 'n': fields[1], 'p': fields[2] }
-      #print 'added', accession
+      sys.stderr.write( 'added {0}\n'.format( accession ) )
 
   records = []
   for target in targets:
@@ -46,8 +49,11 @@ def draw_bias( src, targets, out_fh ):
         mid = float( fields[4] )
         high = float( fields[6] )
     #print 'path', info[accession]['p']
-    record = { 'a': accession, 'l': low, 'm': mid, 'h': high, 'p': info[accession]['p'], 'c': color_list[path_list.index(info[accession]['p'])], 'n': info[accession]['n'] }
-    records.append( record )
+    if info[accession]['p'] == 'exclude':
+      sys.stderr.write( 'skipped {0}\n'.format( accession ) )
+    else:
+      record = { 'a': accession, 'l': low, 'm': mid, 'h': high, 'p': info[accession]['p'], 'c': color_list[path_list.index(info[accession]['p'])], 'n': info[accession]['n'] }
+      records.append( record )
 
   #default_color = 'b'
   #midcolor = 'r'
@@ -71,6 +77,7 @@ def draw_bias( src, targets, out_fh ):
       ax.vlines(x=float(record['m']), ymin=y-mid_height, ymax=y+mid_height, color=record['c'], lw=mid_width)
     y += tick_size
     y_labels.append( record['n'] )
+    sys.stderr.write( 'added record {0}\n'.format( record ) )
   ax.set_ylim(ymin=-tick_size / 2, ymax=y)
   ax.set_xlim(xmin=0)
   ax.tick_params(axis='y', labelsize=6)
@@ -79,8 +86,9 @@ def draw_bias( src, targets, out_fh ):
   ax.set_yticks(np.arange(0, y, tick_size))
   ax.set_yticklabels(y_labels)
   ax.set_xlabel('Estimated bias (%)' )
-  leg = ax.legend(loc='lower right', prop={'size':12})
-  leg.get_frame().set_alpha(0.8)
+  if len(first) > 1:
+    leg = ax.legend(loc='lower right', prop={'size':9})
+    leg.get_frame().set_alpha(0.8)
 
   fig.savefig(out_fh, format='pdf', dpi=1000)
   #fig.savefig('%s/%s.png' % (REPORT_DIRECTORY, target), format='png', dpi=300)

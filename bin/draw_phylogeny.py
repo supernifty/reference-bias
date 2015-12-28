@@ -45,9 +45,10 @@ def parse( src, distances, results ):
 
 def make_colour_code( info, distances, records, out_fh ):
 
-  max_bias = 30.
+  max_bias = 20.
   for record in records:
     max_bias = max( max_bias, record['m'] )
+  sys.stderr.write( 'max bias {0}\n'.format( max_bias ) )
   max_bias = ( max_bias + 5 ) - ( max_bias % 5 ) # round to 5
   out_fh.write( '## max bias is {0}\n'.format( max_bias ) )
   #conv = matplotlib.cm.RdYlGn

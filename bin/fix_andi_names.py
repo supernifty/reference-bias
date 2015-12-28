@@ -1,13 +1,13 @@
 
 # change andi name to accession
-# fix_names accessions < andi.dist > andi.fixed.dist
+# fix_names accessions ecoli65.list < andi.dist > andi.fixed.dist
 # see draw_phylogeny for details
 
 import re
 import sys
 
 def shorten( name ):
-  short_name = re.sub( '(Escherichia coli|strain|whole genome shotgun sequence|complete sequence|DNA|str\\.|complete genome|chromosome|,|\'|E2348/69 )', '', name.split( ' ', 1 )[1].strip() ).strip()
+  short_name = re.sub( '(Staphylococcus aureus subsp. aureus|Staphylococcus aureus|Escherichia coli|strain|whole genome shotgun sequence|complete sequence|DNA|str\\.|complete genome|chromosome|,|\'|E2348/69 )', '', name.split( ' ', 1 )[1].strip() ).strip()
   short_name = re.sub( '  *', ' ', short_name )
   return short_name
 

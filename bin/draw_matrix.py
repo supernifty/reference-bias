@@ -5,7 +5,7 @@
 # usage
 # python draw_matrix.py genome_map < matrix.out > chart.pdf
 # genome_map has the format:
-# donor_filename,label
+# donor_filename,label,extra
 
 import sys
 
@@ -16,7 +16,7 @@ from matplotlib import rcParams
 
 rcParams.update({'figure.autolayout': True})
 #pylab.rcParams['figure.figsize'] = 8, 6
-pylab.rcParams['figure.figsize'] = 12, 8
+pylab.rcParams['figure.figsize'] = 10, 8
 
 def genome_sort( gmap ):
   def sorter( x ):
@@ -26,7 +26,7 @@ def genome_sort( gmap ):
 def draw_matrix( in_fh, genome_map, out_fh ):
   gmap = {}
   for line in genome_map:
-    x, y = [ z.strip() for z in line.split(',') ]
+    x, y, _ = [ z.strip() for z in line.split(',') ]
     gmap[x] = y
 
   genomes = set()
@@ -51,7 +51,7 @@ def draw_matrix( in_fh, genome_map, out_fh ):
 
   fig = plt.figure()
   ax = fig.add_subplot(111)
-  ax.set_aspect(1)
+  ax.set_aspect(0.5)
   ax.set_ylabel('Donor')
   ax.set_xlabel('Reference')
 
@@ -67,7 +67,7 @@ def draw_matrix( in_fh, genome_map, out_fh ):
   sys.stderr.write( '{0}\n'.format( mapped_genome_list ) )
   ax.set_xticks(np.arange(len(mapped_genome_list)), minor=False)
   ax.set_yticks(np.arange(len(mapped_genome_list)), minor=False)
-  ax.set_xticklabels( mapped_genome_list, rotation=45 )
+  ax.set_xticklabels( mapped_genome_list, rotation=45, horizontalalignment='right' )
   ax.set_yticklabels( mapped_genome_list )
 
   cb = fig.colorbar(res, label='% loss')

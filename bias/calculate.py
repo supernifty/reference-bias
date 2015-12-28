@@ -311,7 +311,7 @@ class Calculator (object):
       bias_low = 100. * ( int(mf[0]) - int(nf[5]) - not_covered_overlap ) / donorlen
       bias_mid = 100. * ( int(mf[0]) - not_covered_overlap ) / donorlen
       bias_high = 100. * ( int(mf[0]) + int(xf[5]) ) / donorlen
-      self.write( 'ESTIMATED BIAS: %.1f -> %.1f -> %.1f' % ( 100. * ( int(mf[0]) - int(nf[5]) - not_covered_overlap ) / donorlen , 100. * ( int(mf[0]) - not_covered_overlap ) / donorlen, 100. * ( int(mf[0]) + int(xf[5]) ) / donorlen ) )
+      self.write( 'ESTIMATED BIAS: %.1f -> %.1f -> %.1f' % ( bias_low, bias_mid, bias_high ) )
       self.write( "===== " )
   
       self.log( 'Stage %i: Finished' % stage )
