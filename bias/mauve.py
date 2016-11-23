@@ -7,7 +7,7 @@ import bio
 # parses mauve output files
 
 class MauveMap( object ):
-  def __init__( self, fh, src_strand=1, target_strand=2, new_reference=None, log=bio.log_stderr ):
+  def __init__( self, fh, src_strand=1, target_strand=2, new_reference=None, old_reference=None, log=bio.log_stderr ):
     '''
       @fh: xmfa file like object of Mauve output
     '''
@@ -16,6 +16,7 @@ class MauveMap( object ):
     self.target_map = None
     self.genome_stats = { 'xmin': 1e9, 'xmax': 0, 'ymin': 1e9, 'ymax': 0, 'blocks': 0 }
     self.new_reference = new_reference
+    self.old_reference = old_reference
     current_sequence = [ '', '' ] # src, target
     src_range = [ 0, 0 ] # src, target
     target_range = [ 0, 0 ] # src, target
@@ -119,32 +120,39 @@ class MauveMap( object ):
     '''
       writes a sam file with the locations remapped
     '''
-    self.stats = { 'total': 0, 'unmapped': 0, 'mapped': 0, 'reads_covered': 0, 'reads_notcovered': 0, 'reads_partial': 0 }
+    self.stats = { 'total': 0, 'unmapped': 0, 'mapped': 0, 'reads_covered': 0, 'reads_notcovered': 0, 'reads_partial': 0, 'other_chromosome': 0 }
     for pos, line in enumerate(sam_fh):
       line = line.strip()
       if line.startswith('@'): # header
         if self.new_reference is None:
           output.write( '%s\n' % line )
         elif self.new_reference is not None and line.startswith( '@SQ' ) and line.find( 'SN:') != -1:
-          line = re.sub(r"SN:[^\s]*", "SN:%s" % self.new_reference, line )
-          line = re.sub(r"LN:[^\s]*", "LN:%i" % self.genome_stats['ymax'], line ) # also sub in ymax
+          line = re.sub(r"SN:[^\s]*", "SN:{0}".format(self.new_reference), line )
+          line = re.sub(r"LN:[^\s]*", "LN:{0}".format(self.genome_stats['ymax']), line ) # also sub in ymax
           output.write( '%s\n' % line )
         else: # write non-reads verbatim
           output.write( '%s\n' % line )
         continue
+
       fields = line.split()
+
+      # skip line if it doesn't come from the old reference
+      if self.old_reference is not None and len(fields) > 2 and fields[2] != self.old_reference:
+        self.stats['other_chromosome'] += 1
+        continue
+
       if len(fields) > 9: # aligned read
         #print fields
         if self.new_reference is not None:
           fields[2] = self.new_reference
         flag = int( fields[1] )
         self.stats['total'] += 1
-        if flag & 0x04 != 0:
+        if flag & 0x04 != 0: # unmapped
           self.stats['unmapped'] += 1
           fields[2] = '*' # make sure it's unmapped!
           output.write( '\t'.join( fields ) )
           output.write( '\n' )
-        else:
+        else: # mapped
           self.stats['mapped'] += 1
           # assess coverage
           start_pos = int(fields[3])

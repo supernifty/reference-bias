@@ -10,11 +10,11 @@ import sys
 
 import bias
 
-def remap_bam( xmfa, origin, target, output, new_reference, remap_cigar, output_not_covered, output_target_coverage, bam, out_fh, bam_to_sam ):
+def remap_bam( xmfa, origin, target, output, new_reference, old_reference, remap_cigar, output_not_covered, output_target_coverage, bam, out_fh, bam_to_sam ):
   # measure coverage
-  print "building coverage map with new_reference {0}...".format( new_reference )
+  print "building coverage map with new_reference {0} from old reference {1}...".format( new_reference, old_reference )
   #print args.origin, dest
-  mauve_map = bias.MauveMap( open(xmfa, 'r'), src_strand=origin, target_strand=target, new_reference=new_reference )
+  mauve_map = bias.MauveMap( open(xmfa, 'r'), src_strand=origin, target_strand=target, new_reference=new_reference, old_reference=old_reference )
   print len(mauve_map.coverage), "positions mapped"
 
   if output_target_coverage:

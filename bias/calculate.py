@@ -6,11 +6,12 @@ import random
 import bias
 
 class Calculator (object):
-  def __init__(self, bwa_path, bowtie_path, mauve_path, bam_to_sam, log, out ):
+  def __init__(self, bwa_path, bowtie_path, mauve_path, bam_to_sam, subread_path, log, out ):
     self.bwa_path = bwa_path
     self.bowtie_path = bowtie_path
     self.mauve_path = mauve_path
     self.bam_to_sam = bam_to_sam
+    self.subread_path = subread_path
     self.log_err = log
     self.log_out = out
 
@@ -28,7 +29,7 @@ class Calculator (object):
   def write( self, msg ):
     self.log_out.write( '{0}\n'.format( msg ) )
 
-  def calculate( self, donor, reference, job, stage, tmpdir, align, donorbam, donorsam, fastq ):
+  def calculate( self, donor, reference, job, stage, tmpdir, align, donorbam, donorsam, fastq, remap_donor, remap_reference ):
     if job:
       idx = int(job)
     else:
@@ -63,19 +64,26 @@ class Calculator (object):
       self.log( 'Stage %i: Reference alignment completed' % stage )
   
     # genome alignment (mauve)
+    if remap_donor is None:
+      remap_donor = donor
+    if remap_reference is None:
+      remap_reference = reference
+
     stage += 1 # 4
     if start <= stage:
-      self.run( '%s --output=%s/mauve%i %s %s' % ( self.mauve_path, tmpdir, idx, donor, reference ) )
+      self.run( '%s --output=%s/mauve%i %s %s' % ( self.mauve_path, tmpdir, idx, remap_donor, remap_reference ) )
       self.log( 'Stage %i: Mauve completed' % stage )
+
+    donor_accession = open( remap_donor, 'r' ).readline().strip().split()[0][1:]
+    reference_accession = open( remap_reference, 'r' ).readline().strip().split()[0][1:]
 
     # realignment
     stage += 1 # 5
     if start <= stage:
-      donor_accession = open( donor, 'r' ).readline().strip().split()[0][1:]
       #self.run( 'python remap_bam.py --xmfa %s/mauve%i --origin 2 --target 1 --output_not_covered %s/notcovered%i.sam --output %s/remapped%i.sam %s/reference%i.sam --new_reference \'%s\' > %s/remap_bam%i.stats' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx, donor_accession, tmpdir, idx ) )
-      self.log( 'python remap_bam.py --xmfa %s/mauve%i --origin 2 --target 1 --output_not_covered %s/notcovered%i.sam --output %s/remapped%i.sam %s/reference%i.sam --new_reference \'%s\' > %s/remap_bam%i.stats' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx, donor_accession, tmpdir, idx ) )
+      #self.log( 'python remap_bam.py --xmfa %s/mauve%i --origin 2 --target 1 --output_not_covered %s/notcovered%i.sam --output %s/remapped%i.sam %s/reference%i.sam --new_reference \'%s\' > %s/remap_bam%i.stats' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx, donor_accession, tmpdir, idx ) )
       #xmfa, origin, target, output, new_reference, remap_cigar, output_not_covered, bam, out_fh, bam_to_sam
-      bias.remap_bam( xmfa='{0}/mauve{1}'.format( tmpdir, idx ), origin=2, target=1, output_not_covered='{0}/notcovered{1}.sam'.format( tmpdir, idx ), output_target_coverage='{0}/mauve_target{1}.bed'.format( tmpdir, idx ), output='{0}/remapped{1}.sam'.format(tmpdir, idx), new_reference=donor_accession, remap_cigar=False, bam='{0}/reference{1}.sam'.format( tmpdir, idx ), out_fh=open( '{0}/remap_bam{1}.stats'.format( tmpdir, idx ), 'w' ), bam_to_sam=self.bam_to_sam )
+      bias.remap_bam( xmfa='{0}/mauve{1}'.format( tmpdir, idx ), origin=2, target=1, output_not_covered='{0}/notcovered{1}.sam'.format( tmpdir, idx ), output_target_coverage='{0}/mauve_target{1}.bed'.format( tmpdir, idx ), output='{0}/remapped{1}.sam'.format(tmpdir, idx), new_reference=donor_accession, old_reference=reference_accession, remap_cigar=False, bam='{0}/reference{1}.sam'.format( tmpdir, idx ), out_fh=open( '{0}/remap_bam{1}.stats'.format( tmpdir, idx ), 'w' ), bam_to_sam=self.bam_to_sam )
       self.log( 'Stage %i: Remap completed' % stage )
   
     if donorbam is None:
@@ -83,31 +91,60 @@ class Calculator (object):
     else:
       target_donorbam = donorbam
   
-     # convert to bam
+    # convert to bam
     stage += 1 # 6
     if start <= stage:
       if donorbam is None:
-        self.run( 'samtools view -bS {0}/donor{1}.sam > {2}'.format( tmpdir, idx, target_donorbam ) )
-      self.run( 'samtools view -bS %s/reference%i.sam > %s/reference%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
+        if donor_accession is None:
+          self.run( 'samtools view -bS {0}/donor{1}.sam | samtools sort -o {2}'.format( tmpdir, idx, target_donorbam ) )
+        else: # filter on chromosome
+          self.run( 'samtools view -bS {0}/donor{1}.sam | samtools sort -o {0}/donorprelim{1}.bam'.format( tmpdir, idx ) )
+          self.run( 'samtools index {0}/donorprelim{1}.bam'.format( tmpdir, idx ) )
+          self.run( 'samtools view -bh {0}/donorprelim{1}.bam "{2}" > {3}'.format(tmpdir, idx, donor_accession, target_donorbam))
+      if reference_accession is None:
+        self.run( 'samtools view -bS %s/reference%i.sam | samtools sort -o %s/reference%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
+      else:
+        self.run( 'samtools view -bS {0}/reference{1}.sam | samtools sort -o {0}/refprelim{1}.bam'.format( tmpdir, idx) )
+        self.run( 'samtools index {0}/refprelim{1}.bam'.format( tmpdir, idx) )
+        self.run( 'samtools view -bh {0}/refprelim{1}.bam "{2}" > {0}/reference{1}.bam'.format(tmpdir, idx, reference_accession, target_donorbam))
       # fix remapped
+      l = []
       if donorsam:
         with open( donorsam, 'r' ) as dfh: # use if already have donor bam
-          l = (dfh.readline(), dfh.readline())
+          for line in dfh:
+            l.append(line)
+            if line.startswith('@PG'):
+              break
+          #l = (dfh.readline(), dfh.readline())
       else:
         with open( '%s/donor%i.sam' % ( tmpdir, idx ), 'r' ) as dfh:
-          l = (dfh.readline(), dfh.readline())
+          for line in dfh:
+            l.append(line)
+            if line.startswith('@PG'):
+              break
+          #l = (dfh.readline(), dfh.readline())
   
       with open( '%s/remapped%i.head' % ( tmpdir, idx ), 'w' ) as rfh:
-        rfh.write( l[0] )
-        rfh.write( l[1] )
+        [ rfh.write(x) for x in l ]
+        #rfh.write( l[0] )
+        #rfh.write( l[1] )
+
       #self.run( 'cat %s/remapped%i.head %s/remapped%i.sam | samtools view -bS - > %s/remapped%i.bam' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
-      self.run( 'samtools view -bS %s/remapped%i.sam > %s/remapped%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
+      self.run( 'samtools view -bS %s/remapped%i.sam | samtools sort -o %s/remapped%i.bam' % ( tmpdir, idx, tmpdir, idx ) )
+      l = []
       with open( '%s/reference%i.sam' % ( tmpdir, idx ), 'r' ) as dfh:
-        l = (dfh.readline(), dfh.readline())
+        for line in dfh:
+          l.append(line)
+          if line.startswith('@PG'):
+            break
+        #l = (dfh.readline(), dfh.readline())
       with open( '%s/notcovered%i.head' % ( tmpdir, idx ), 'w' ) as rfh:
-        rfh.write( l[0] )
-        rfh.write( l[1] )
-      self.run( 'cat %s/notcovered%i.head %s/notcovered%i.sam | samtools view -bS - > %s/notcovered%i.bam' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
+        [ rfh.write(x) for x in l ]
+        #rfh.write( l[0] )
+        #rfh.write( l[1] )
+      self.run( 'cat %s/notcovered%i.head %s/notcovered%i.sam | samtools view -bS - | samtools sort -o %s/notcovered%i.bam' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx ) )
+      #self.run( 'samtools index {0}/notcoveredprelim{1}.bam'.format( tmpdir, idx) )
+      #self.run( 'samtools view -bS {0}/notcoveredprelim{1}.bam | samtools sort -o {0}/notcovered{1}.bam' % ( tmpdir, idx ) )
       self.log( 'Stage %i: Convert to bam completed' % stage )
 
     stage += 1 # 7
@@ -161,7 +198,7 @@ class Calculator (object):
     if start <= stage:
       # find @SQ SN:tiny2  LN:2310
       reflen = self.find_sequence_len( open( '%s/notcovered%i.head' % ( tmpdir, idx ), 'r' ) )
-      donorlen = self.find_sequence_len( open( '%s/remapped%i.head' % ( tmpdir, idx ), 'r' ) )
+      remapped_donorlen = self.find_sequence_len_sum( open( '%s/remapped%i.head' % ( tmpdir, idx ), 'r' ) )
       self.write( "===== Stats =====" )
       # reads
       self.write( "-- Reads --" )
@@ -243,9 +280,9 @@ class Calculator (object):
         not_covered_overlap = int( open( '%s/notcovered_overlap%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip() )
       except:
         not_covered_overlap = 0
-      self.write( "Donor not covered: %i (%.2f%%)" % ( donor_not_covered, 100. * donor_not_covered / max( 1, donorlen ) ) )
+      self.write( "Donor not covered: %i (%.2f%%)" % ( donor_not_covered, 100. * donor_not_covered / max( 1, remapped_donorlen ) ) )
       self.write( "Donor not covered with mauve target: %i (%.2f%%)" % ( not_covered_overlap, 100. * not_covered_overlap / max( 1, donor_not_covered ) ) )
-      self.write( "Donor covered: %i (%.2f%%)" % ( donorlen - int(df[0]), 100. * (donorlen - int(df[0]) ) / max( 1, donorlen ) ) )
+      self.write( "Donor covered: %i (%.2f%%)" % ( remapped_donorlen - int(df[0]), 100. * (remapped_donorlen - int(df[0]) ) / max( 1, remapped_donorlen ) ) )
       self.write( "Donor gaps: %s" % df[5] )
       self.write( "Donor max gap: %s" % df[2] )
       dfs = open( '%s/donorsum%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip().split()
@@ -263,8 +300,8 @@ class Calculator (object):
       mf = open( '%s/remapped%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip().split()
       if len(mf) == 0:
         mf = (0,0,0,0,0,0)
-      self.write( "Remapped not covered: %s (%.1f%%)" % (mf[0], 100. * int(mf[0]) / max( 1, donorlen ) ) )
-      self.write( "Remapped covered: %i (%.1f%%)" % (donorlen - int(mf[0]), 100. * (donorlen - int(mf[0]) ) / max( 1, donorlen ) ) )
+      self.write( "Remapped not covered: %s (%.1f%%)" % (mf[0], 100. * int(mf[0]) / max( 1, remapped_donorlen ) ) )
+      self.write( "Remapped covered: %i (%.1f%%)" % (remapped_donorlen - int(mf[0]), 100. * (remapped_donorlen - int(mf[0]) ) / max( 1, remapped_donorlen ) ) )
       self.write( "Remapped gaps: %s" % mf[5] )
       self.write( "Remapped max gap: %s" % mf[2] )
       mfs = open( '%s/remappedsum%i.cov' % ( tmpdir, idx ), 'r' ).readline().strip().split()
@@ -291,26 +328,26 @@ class Calculator (object):
         if len(fields) >1:
           remapping_stats[fields[0].strip()] = int(fields[1])
   
-      self.write( "Mapped bases: %i (%.1f%%)" % (remapping_stats['count'], 100. * remapping_stats['count'] / max( 1, donorlen ) ) )
-      self.write( "Not mapped bases: %i (%.1f%%)" % (donorlen - remapping_stats['count'], 100. * ( donorlen - remapping_stats['count'] )/ donorlen ) )
+      self.write( "Mapped bases: %i (%.1f%%)" % (remapping_stats['count'], 100. * remapping_stats['count'] / max( 1, remapped_donorlen ) ) )
+      self.write( "Not mapped bases: %i (%.1f%%)" % (remapped_donorlen - remapping_stats['count'], 100. * ( remapped_donorlen - remapping_stats['count'] )/ remapped_donorlen ) )
       self.write( "Mapped blocks: %s" % remapping_stats['blocks'] )
       self.write( "Covered reads: %i (%.1f)" % ( remapping_stats['reads_covered'], 100. * remapping_stats['reads_covered'] / max( 1, remapping_stats['mapped'] ) ) )
       self.write( "Covered partial reads: %i (%.1f)" % ( remapping_stats['reads_covered'] + remapping_stats['reads_partial'], 100. * ( remapping_stats['reads_covered']  + remapping_stats['reads_partial'] )/ remapping_stats['mapped'] ) )
       self.write( "Not mapped reads: %i (%.1f)" % ( remapping_stats['reads_notcovered'] + remapping_stats['reads_partial'], 100. * ( remapping_stats['reads_notcovered']  + remapping_stats['reads_partial'] ) / max( 1, remapping_stats['mapped'] ) ) )
   
       self.write( "\n-- Summary --" )
-      coverage_loss = donorlen - ( reflen - int(rf[0]) )
-      self.write( "Donor not covered by direct alignment: %i (%.2f%%)" % ( donor_not_covered, 100. * donor_not_covered / max( 1, donorlen ) ) )
-      self.write( 'Best case loss from reference coverage: %i / %i: %.1f%%' % ( coverage_loss, donorlen, 100. * coverage_loss / max( 1, donorlen ) ) )
-      self.write( 'Best case loss from remapping: %i / %i: %.1f%%' % ( donorlen - remapping_stats['count'], donorlen, 100. * ( donorlen - remapping_stats['count'] ) / max( 1, donorlen ) ) )
-      self.write( 'Loss after remap coverage: %i / %i: %.1f%%' % ( int(mf[0]), donorlen, 100. * int(mf[0]) / max( 1, donorlen ) ) )
-      self.write( 'Loss due to remap: %i / %i: %.1f%%' % ( int(mf[0]) - coverage_loss, donorlen, 100. * ( int(mf[0]) - coverage_loss ) / max( 1, donorlen ) ) )
-      self.write( 'Potential mismatch impact: %i / %i: %.1f%%' % ( int(xf[5]), donorlen, 100. * int(xf[5]) / max( 1, donorlen ) ) )
-      self.write( 'Off target: %i / %i: %.1f%%' % ( int(nf[5]), donorlen, 100. * int(nf[5]) / max( 1, donorlen ) ) )
+      coverage_loss = remapped_donorlen - ( reflen - int(rf[0]) )
+      self.write( "Donor not covered by direct alignment: %i (%.2f%%)" % ( donor_not_covered, 100. * donor_not_covered / max( 1, remapped_donorlen ) ) )
+      self.write( 'Best case loss from reference coverage: %i / %i: %.1f%%' % ( coverage_loss, remapped_donorlen, 100. * coverage_loss / max( 1, remapped_donorlen ) ) )
+      self.write( 'Best case loss from remapping: %i / %i: %.1f%%' % ( remapped_donorlen - remapping_stats['count'], remapped_donorlen, 100. * ( remapped_donorlen - remapping_stats['count'] ) / max( 1, remapped_donorlen ) ) )
+      self.write( 'Loss after remap coverage: %i / %i: %.1f%%' % ( int(mf[0]), remapped_donorlen, 100. * int(mf[0]) / max( 1, remapped_donorlen ) ) )
+      self.write( 'Loss due to remap: %i / %i: %.1f%%' % ( int(mf[0]) - coverage_loss, remapped_donorlen, 100. * ( int(mf[0]) - coverage_loss ) / max( 1, remapped_donorlen ) ) )
+      self.write( 'Potential mismatch impact: %i / %i: %.1f%%' % ( int(xf[5]), remapped_donorlen, 100. * int(xf[5]) / max( 1, remapped_donorlen ) ) )
+      self.write( 'Off target: %i / %i: %.1f%%' % ( int(nf[5]), remapped_donorlen, 100. * int(nf[5]) / max( 1, remapped_donorlen ) ) )
       self.write( "Donor not covered with mauve target: %i (%.2f%%)" % ( not_covered_overlap, 100. * not_covered_overlap / max( 1, donor_not_covered ) ) )
-      bias_low = 100. * ( int(mf[0]) - int(nf[5]) - not_covered_overlap ) / donorlen
-      bias_mid = 100. * ( int(mf[0]) - not_covered_overlap ) / donorlen
-      bias_high = 100. * ( int(mf[0]) + int(xf[5]) ) / donorlen
+      bias_low = 100. * ( int(mf[0]) - int(nf[5]) - not_covered_overlap ) / remapped_donorlen
+      bias_mid = 100. * ( int(mf[0]) - not_covered_overlap ) / remapped_donorlen
+      bias_high = 100. * ( int(mf[0]) + int(xf[5]) ) / remapped_donorlen
       self.write( 'ESTIMATED BIAS: %.1f -> %.1f -> %.1f' % ( bias_low, bias_mid, bias_high ) )
       self.write( "===== " )
   
@@ -329,13 +366,30 @@ class Calculator (object):
       self.run( '%s index %s' % ( self.bwa_path, fasta ) )
     elif mapper == 'bowtie2':
       self.run( '%s-build %s %s-bt2' % ( self.bowtie_path, fasta, fasta ) )
+    elif mapper == 'subread':
+      self.run( '%s/subread-buildindex -o %s.subidx %s' % ( self.subread_path, fasta, fasta ) )
+    else:
+      raise "Unsupported aligner"
   
   def align( self, mapper, fasta, fastq, sam ):
     if mapper == 'bwa':
       self.run( '%s mem -t 8 %s %s > %s' % ( self.bwa_path, fasta, fastq, sam ) )
     elif mapper == 'bowtie2':
       self.run( '%s --local -p 16 -x %s-bt2 -U %s --quiet -S %s' % ( self.bowtie_path, fasta, fastq, sam ) ) # -t adds time
+    elif mapper == 'subread':
+      self.run( '%s/subread-align -t 1 --SAMoutput -i %s.subidx -r %s -o %s' % ( self.subread_path, fasta, fastq, sam ) ) # -t adds time
+    else:
+      raise "Unsupported aligner"
   
+  def find_sequence_len_sum( self, fh ):
+    total = 0
+    # look for @SQ SN:tiny2  LN:2310
+    for line in fh:
+      for fragment in line.strip().split():
+        if fragment.startswith('LN:'):
+          total += int( fragment.split(':',2)[-1] )
+    return total  
+
   def find_sequence_len( self, fh ):
     # look for @SQ SN:tiny2  LN:2310
     for line in fh:

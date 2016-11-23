@@ -59,18 +59,19 @@ class SamDiff(object):
       #self.position_totals = collections.defaultdict(int)
       self.mapq_totals = collections.defaultdict(list)
       for key, value in self._position_stats.iteritems(): # readname-pos, distribution
+        #log( 'analyzing {0} {1}...'.format(key, value) )
         #self.position_totals[value] += 1
         if mapq_stats and self.subset_detail:
           self.mapq_totals[value].extend( self.mapq_subsets[key] )
         if self.mismatch_detail is not None and self.mismatch_detail == value: # mismatch_detail exactly
-          name, pos = key.split( '-' )
+          name, pos = key.rsplit( '-', 1 ) # last -
           self.mismatch_stats[name] = { 'p': int(pos) }
           #log( 'found %s at %i' % (name, int(pos)) )
       log( 'analyzing mismatches...' )
       if self.mismatch_detail is not None: # 2nd pass for mismatch updates
         for key, value in self._position_stats.iteritems(): # readname-pos, distribution
           if value != 0 and value & self.mismatch_detail == 0: # mismatch not present
-            name, pos = key.split( '-' )
+            name, pos = key.rsplit( '-', 1 )
             if name in self.mismatch_stats:
               self.mismatch_stats[name]['a'] = int(pos)
               #log( 'found alt for %s at %i' % (name, int(pos)) )
