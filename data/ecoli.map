@@ -1,0 +1,74 @@
+./data/phylogeny/NC_000913.3.fasta,K-12 sub MG1655,Commensal
+./data/phylogeny/NC_002655.2.fasta,O157:H7 EDL933,EHEC
+./data/phylogeny/NC_004431.1.fasta,CFT073,ExPEC
+./data/phylogeny/NC_007384.1.fasta,Shigella sonnei Ss046,Shigellosis
+./data/phylogeny/CM001474.1.fasta,Shigella 5a,Shigellosis 
+./data/phylogeny/AP009048.1.fasta,K12 W3110,Commensal 
+./data/phylogeny/NC_010473.1.fasta,K12 DH10B,Commensal
+./data/phylogeny/FN554766.1.fasta,042,EAEC
+./data/phylogeny/NC_008253.1.fasta,536,ExPEC
+./data/phylogeny/AAKB00000000.2.fasta,53638 whole genome shotgun sequencing project,EIEC
+./data/phylogeny/NC_011748.1.fasta,55989,EAEC
+./data/phylogeny/CP001671.1.fasta,ABU 83972,ExPEC
+./data/phylogeny/NC_008563.1.fasta,APEC O1,ExPEC
+./data/phylogeny/NC_020163.1.fasta,APEC O78,ExPEC
+./data/phylogeny/NC_010468.1.fasta,ATCC 8739,Commensal
+./data/phylogeny/NC_012967.1.fasta,B REL606,Commensal
+./data/phylogeny/NC_012947.1.fasta,BL21-Gold(DE3)pLysS AG,Commensal
+./data/phylogeny/AM946981.2.fasta,BL21(DE3),Commensal
+./data/phylogeny/NC_012759.1.fasta,BW2952,Commensal
+./data/phylogeny/NC_004431.1.fasta,CFT073,ExPEC
+./data/phylogeny/CP002212.1.fasta,clone D i14,ExPEC
+./data/phylogeny/CP001637.1.fasta,DH1,Commensal
+./data/phylogeny/NC_009801.1.fasta,E24377A,ETEC
+./data/phylogeny/NC_011745.1.fasta,ED1a,Commensal
+./data/phylogeny/FN649414.1.fasta,ETEC H10407,ETEC
+./data/phylogeny/NC_009800.1.fasta,HS,Commensal
+./data/phylogeny/NC_011741.1.fasta,IAI1,Commensal
+./data/phylogeny/NC_011750.1.fasta,IAI39,ExPEC
+./data/phylogeny/CP001969.1.fasta,IHE3034,ExPEC
+./data/phylogeny/NC_010473.1.fasta,K12 sub DH10B,Commensal
+./data/phylogeny/NC_020518.1.fasta,K-12 sub MDS42,Commensal
+#./data/phylogeny/NC_000913.2.fasta,K-12 sub MG1655,Commensal
+./data/phylogeny/AP009048.1.fasta,K12 sub W3110,Commensal
+./data/phylogeny/CP002516.1.fasta,KO11,Commensal
+./data/phylogeny/CU651637.1.fasta,LF82,AIEC
+./data/phylogeny/CP002797.2.fasta,NA114,ExPEC
+./data/phylogeny/NC_013353.1.fasta,O103:H2 12009,EHEC
+./data/phylogeny/CP003297.1.fasta,O104:H4 2009EL-2050,EAEC
+./data/phylogeny/CP003301.1.fasta,O104:H4 2009EL-2071,EAEC
+./data/phylogeny/CP003289.1.fasta,O104:H4 2011C-3493,EAEC
+./data/phylogeny/NC_013364.1.fasta,O111:H- 11128,EHEC
+./data/phylogeny/NC_011601.1.fasta,0127:H6 E2348/69,EPEC
+./data/phylogeny/NC_011353.1.fasta,O157:H7 EC4115,EHEC
+./data/phylogeny/NC_002655.2.fasta,O157:H7 EDL933,EHEC
+./data/phylogeny/NC_002695.1.fasta,O157:H7 Sakai,EHEC
+./data/phylogeny/NC_013008.1.fasta,O157:H7 TW14359,EHEC
+./data/phylogeny/CM000662.1.fasta,O157:H7 TW14588,EHEC
+./data/phylogeny/NC_013361.1.fasta,O26:H11 11368,EHEC
+./data/phylogeny/NC_013941.1.fasta,O55:H7 CB9615,EPEC
+./data/phylogeny/CP003109.1.fasta,O55:H7 RM12579,EPEC
+./data/phylogeny/CP003034.1.fasta,O7:K1 CE10,ExPEC
+./data/phylogeny/CP001855.1.fasta,O83:H1 NRG 857C,AIEC
+./data/phylogeny/CP002291.1.fasta,P12b,Unclassified
+./data/phylogeny/NC_011742.1.fasta,S88,ExPEC
+./data/phylogeny/NC_011415.1.fasta,SE11,Commensal
+./data/phylogeny/AP009378.1.fasta,SE15,Commensal
+./data/phylogeny/NC_010498.1.fasta,SMS-3-5,Commensal
+./data/phylogeny/CP002167.1.fasta,UM146,AIEC
+./data/phylogeny/NC_011751.1.fasta,UMN026,ExPEC
+./data/phylogeny/NZ_AGTD01000001.1.fasta,UMNF18,ETEC
+./data/phylogeny/CP002729.1.fasta,UMNK88,ETEC
+./data/phylogeny/NC_007946.1.fasta,UTI89,ExPEC
+./data/phylogeny/CP002185.1.fasta,W,Commensal
+./data/phylogeny/CP001925.1.fasta,Xuzhou21,EHEC
+./data/phylogeny/NC_010658.1.fasta,Shigella boydii CDC 3083-94,Shigellosis
+./data/phylogeny/NC_007613.1.fasta,Shigella boydii Sb227,Shigellosis
+./data/phylogeny/NC_007606.1.fasta,Shigella dysenteriae Sd197,Shigellosis
+./data/phylogeny/NC_004741.1.fasta,Shigella flexneri 2a 2457T,Shigellosis
+./data/phylogeny/NC_004741.1.fasta,Shigella flexneri 2a 2457T,Shigellosis
+./data/phylogeny/NC_004337.2.fasta,Shigella flexneri 2a 301,Shigellosis
+./data/phylogeny/NC_008258.1.fasta,Shigella flexneri 5 8401,Shigellosis
+./data/phylogeny/CM001474.1.fasta,Shigella flexneri 5a M90T,Shigellosis
+./data/phylogeny/NC_008258.1.fasta,Shigella flexneri 5 8401,Shigellosis
+./data/phylogeny/HE616528.1.fasta,Shigella sonnei 53G main,Shigellosis

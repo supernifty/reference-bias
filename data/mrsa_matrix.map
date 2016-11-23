@@ -1,0 +1,15 @@
+#sra,ref
+# MSSA476 (choose reference good 9609)
+./data/mrsa/SRR1955495-1M.fastq.gz,./data/mrsa/NC_002953.3.fasta
+#
+# TW20 (choose reference good 9859)
+./data/mrsa/ERR045451-1M.fastq.gz,./data/mrsa/NC_017331.1.fasta
+#
+# MRSA252 (choose reference bad! NC_017331.1.fasta   8811)
+#./data/mrsa/SRR350984-1M.fastq.gz,NC_002952.2.fasta
+./data/mrsa/ERR505392-1M.fastq.gz,./data/mrsa/NC_002952.2.fasta
+#
+# ST93 clone: Staphylococcus aureus subsp. aureus JKD6159, complete genome
+./data/mrsa/ERR182547-1M.fastq.gz,./data/mrsa/NC_017338.1.fasta
+# Staphylococcus aureus subsp. aureus USA300_TCH1516
+./data/mrsa/SRR022868-1M.fastq.gz,./data/mrsa/NC_010079.1.fasta
