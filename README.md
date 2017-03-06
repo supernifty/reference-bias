@@ -149,3 +149,22 @@ python ./bin/draw_matrix.py ./data/ecoli_matrix.map < ./results/ecoli_matrix.out
 * calculate_bias_matrix takes a set of readsets and genomes and calculates bias for each pairwise combination, then writes this to the first argument
 * draw_matrix takes this generated output as stdin and uses the names from the matrix file to generate a graph.
 
+### Human Results
+* download data by running 
+```
+cd data/human
+./get_data.sh
+cd -
+```
+
+* generate pipelines by running
+```
+cd xpipe-template
+./make.sh
+cd -
+```
+
+* xpipe is a required dependency, obtain from https://github.com/supernifty/xpipe
+* xpipe.commands contains the pipeline for human analysis
+* Look at xpipe.sh as an example of how to run the human analysis using the slurm job manager.
+

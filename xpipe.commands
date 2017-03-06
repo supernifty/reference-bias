@@ -1,0 +1,69 @@
+#
+# index 
+#
+{BWA} index {REFERENCE_FASTA} # index reference
+{BWA} index {DONOR_FASTA} # index donor
+#
+# align
+#
+{BWA} mem -t 8 {DONOR_FASTA} {FASTQ} > {DONORFULL}
+{BWA} mem -t 8 {REFERENCE_FASTA} {FASTQ} > {REFERENCEFULL}
+#
+# mauve remapping
+#
+progressiveMauve --output=./{TMPDIR}/mauve-human-{CHROMOSOME}.out {DONOR_CHR_FASTA} {REFERENCE_CHR_FASTA}
+#
+# filter on chromosomes of interest
+#
+python ./bin/filter_sam.py --target {DONOR_FILTERED} --source {DONORFULL} --chromosome "{DONOR_CHROMOSOME}"
+python ./bin/filter_sam.py --target {REFERENCE_FILTERED} --source {REFERENCEFULL} --chromosome "{REFERENCE_CHROMOSOME}"
+#
+# map the sam from reference to donor
+#
+python ./bin/bias/remap_bam.py --xmfa ./{TMPDIR}/mauve-human-{CHROMOSOME}.out --origin 2 --target 1 --output {REMAPPED_SAM} --output_not_covered {NOTCOVERED} --output_target_coverage {MAUVE_TARGET} {REFERENCE_FILTERED} > {REMAPPED_STATS}
+# 
+# convert to bam
+#
+#samtools view -bS {DONORFULL} | samtools sort -o DONORBAM
+#samtools view -bS REERENCEFULL | samtools sort -o REFERENCEBAM
+#
+#
+#
+#python compare_bams.py --compare_position True --subset_detail True --mismatch_detail 1 --xmfa %s/mauve%i --origin 2 --target 1 %s/donor%i.bam %s/remapped%i.bam > %s/compare_bams%i.log' % ( tmpdir, idx, tmpdir, idx, tmpdir, idx, tmpdir, idx )
+#
+# donor coverage
+#python ./bin/bias_detail.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} > {BIAS_CSV_DONOR}
+# reference coverage
+#python ./bin/bias_detail.py --reference {REFERENCE_FILTERED} --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} > {BIAS_CSV_REFERENCE}
+python ./bin/bias_filter.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} --mode correct > {CORRECT_REMAPPED_SAM}
+samtools view -b {CORRECT_REMAPPED_SAM} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk 'BEGIN { total = 0; } { total += $3-$2; } END { printf "high bias: correct only: %s\n", total; }' > {TMP_RESULT}
+#
+python ./bin/bias_filter.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} --mode any > {ANY_REMAPPED_SAM}
+samtools view -b {ANY_REMAPPED_SAM} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk 'BEGIN { total = 0; } { total += $3-$2; } END { printf "mid bias: any total: %s\n", total; }' >> {TMP_RESULT}
+#
+#python ./bin/bias_filter.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} --mode unmapped > {UNMAPPED_REMAPPED_SAM}
+#samtools view -b {UNMAPPED_REMAPPED_SAM} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk '{ total += $3-$2; } END { print total; }'
+#
+head -2 < {REFERENCE_FILTERED} > {NOTCOVERED_CORRECTED}
+cat {NOTCOVERED} >> {NOTCOVERED_CORRECTED}
+#python ./bin/bias_filter.py --reference {REFERENCE_FILTERED} --remapped {REMAPPED_SAM} --mode untransformed > {UNTRANSFORMED_SAM}
+samtools view -b {NOTCOVERED_CORRECTED} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk 'BEGIN { total = 0; } { total += $3-$2; } END { printf "not transformed: %s\n", total; }' >> {TMP_RESULT}
+#
+python ./bin/bias_filter.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} --mode incorrect > {INCORRECT_REMAPPED_SAM}
+samtools view -b {INCORRECT_REMAPPED_SAM} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk 'BEGIN { total = 0; } { total += $3-$2; } END { printf "incorrect remap: %s\n", total; }' >> {TMP_RESULT}
+#
+head -1 {DONOR_FILTERED} | sed 's/.*LN:\(.*\)/donor length: \1/' >> {TMP_RESULT}
+# donor direct coverage
+samtools view -b {DONOR_FILTERED} | bedtools genomecov -ibam - -bga | awk '$4>0' | awk 'BEGIN { total = 0; } { total += $3-$2; } END { printf "donor coverage: %s\n", total; }' >> {TMP_RESULT}
+#
+python ./bin/calculate_final.py < {TMP_RESULT} | sed 's/^/{DESCRIPTION}: /' >> {RESULTS}
+# 
+# donor coverage
+# bias apparent on donor alignment
+python ./bin/bias_detail.py --donor {DONOR_FILTERED} --remapped {REMAPPED_SAM} > {BIAS_CSV_DONOR}
+# map genes from reference to donor
+#python ./bin/bias/remap_bed.py --xmfa {MAUVEOUT} --origin 2 --target 1 ./data/human/hg38-genes.bed --chromosome {CHROMOSOME} | sort -k1,1 -k2,2n | bedtools merge -i - > ./{TMPDIR}/hg38-remapped-{CHROMOSOME}.bed
+python ./bin/bias/remap_bed.py --xmfa ./{TMPDIR}/mauve-human-{CHROMOSOME}.out --origin 2 --target 1 ./data/human/hg38-genes.bed --chromosome {CHROMOSOME} | sort -k1,1 -k2,2n > ./{TMPDIR}/hg38-remapped-{CHROMOSOME}.bed
+python ./bin/bias/remap_bed.py --xmfa ./{TMPDIR}/mauve-human-{CHROMOSOME}.out --origin 2 --target 1 ./data/human/hg38-genes.bed --chromosome {CHROMOSOME} --write_unmapped | sort -k1,1 -k2,2n > ./{TMPDIR}/hg38-unmapped-{CHROMOSOME}.bed
+# measure bias on remapped genes
+python ./bin/assess_bias.py --bias {BIAS_CSV_DONOR} --bed ./{TMPDIR}/hg38-remapped-{CHROMOSOME}.bed --unmapped ./{TMPDIR}/hg38-unmapped-{CHROMOSOME}.bed --chromosome {CHROMOSOME} | sort -n > {BIAS_GENE}
