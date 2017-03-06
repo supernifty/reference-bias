@@ -4,7 +4,7 @@ import argparse
 import collections
 import sys
 
-def assess_bias(chrom, bias, bed):
+def assess_bias(chrom, bias, bed, unmapped):
     sys.stderr.write('reading bias file...')
 
     unaffected = set()
@@ -41,6 +41,15 @@ def assess_bias(chrom, bias, bed):
                 if pos in total:
                     gene_total[fields[3]] += 1
 
+    sys.stderr.write('reading unmapped bed file...')
+    for idx, line in enumerate(unmapped):
+        if idx % 100000 == 0:
+            sys.stderr.write("read {} lines...\n".format(idx))
+        fields = line.strip('\n').split('\t')
+        if fields[0] == chrom:
+            for pos in range(int(fields[1]), int(fields[2])):
+                gene_total[fields[3]] += 1
+
     # write result
     sys.stdout.write('{},{},{}\n'.format('bias', 'gene', 'count'))
     for gene in gene_total.keys():
@@ -50,6 +59,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Assess bias by feature')
     parser.add_argument('--bias', help='generated bias file')
     parser.add_argument('--bed', help='features')
+    parser.add_argument('--unmapped', help='unmapped features')
     parser.add_argument('--chromosome', help='chromosome')
     args = parser.parse_args()
-    assess_bias(args.chromosome, open(args.bias, 'r'), open(args.bed, 'r'))
+    assess_bias(args.chromosome, open(args.bias, 'r'), open(args.bed, 'r'), open(args.unmapped, 'r'))
