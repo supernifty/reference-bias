@@ -54,7 +54,6 @@ def remap_bam( xmfa, origin, target, output, new_reference, old_reference, remap
     out_fh.write( "%20s: %i\n" % ( key, mauve_map.stats[key] ) )
  
 if __name__ == '__main__':
-  args = parser.parse_args()
   parser = argparse.ArgumentParser(description='Remap a bam file using XMFA')
   parser.add_argument('bam', help='bam file to analyze')
   parser.add_argument('--xmfa', required=True, help='xmfa file')
@@ -66,5 +65,7 @@ if __name__ == '__main__':
   parser.add_argument('--output_not_covered', required=False, help='sam output file for aligned reads with no map')
   parser.add_argument('--output_target_coverage', required=False, help='target map')
 
-  remap_bam( args.xmfa, args.origin, args.target, args.output, args.new_reference, args.remap_cigar, args.output_not_covered, args.output_target_coverage, args.bam, sys.stdout, "samtools view -h %s" )
+  args = parser.parse_args()
+  old_reference = args.new_reference
+  remap_bam( args.xmfa, args.origin, args.target, args.output, args.new_reference, old_reference, args.remap_cigar, args.output_not_covered, args.output_target_coverage, args.bam, sys.stdout, "samtools view -h %s" )
  

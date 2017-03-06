@@ -29,7 +29,20 @@ class Calculator (object):
   def write( self, msg ):
     self.log_out.write( '{0}\n'.format( msg ) )
 
-  def calculate( self, donor, reference, job, stage, tmpdir, align, donorbam, donorsam, fastq, remap_donor, remap_reference ):
+  def filter_sam( self, out_fn, in_fn, chromosome):
+    with open(out_fn, 'w') as donor_out:
+      for line in open(in_fn, 'r'):
+        if line.startswith("@SQ"):
+          if "SN:{}\t".format(chromosome) in line:
+            donor_out.write(line)
+        elif line.startswith("@"):
+          donor_out.write(line)
+        else:
+          fields = line.strip('\n').split('\t')
+          if fields[2] == chromosome:
+            donor_out.write(line)
+ 
+  def calculate( self, donor, reference, job, stage, tmpdir, align, donorbam, donorsam, fastq, remap_donor, remap_reference, reference_chromosome, donor_chromosome, bed ):
     if job:
       idx = int(job)
     else:
@@ -50,16 +63,36 @@ class Calculator (object):
       self.index( align, reference )
       self.log( 'Stage %i: Indexing completed' % stage )
   
-    stage += 1 # 2
+    stage += 1 # start of stage 2
     # alignment (aln)
     if start <= stage:
       if donorsam is None:
-        self.align( align, donor, fastq, '{0}/donor{1}.sam'.format( tmpdir, idx ) )
+        if donor_chromosome is None:
+          self.align( align, donor, fastq, '{0}/donor{1}.sam'.format( tmpdir, idx ) )
+        else:
+          self.align( align, donor, fastq, '{0}/donorfull{1}.sam'.format( tmpdir, idx ) )
+          # filter on chromosome
+          self.filter_sam("{0}/donor{1}.sam".format( tmpdir, idx ), '{0}/donorfull{1}.sam'.format( tmpdir, idx ), donor_chromosome)
+                   
+          #self.run( 'samtools view -bhS {0}/donorfull{1}.sam | samtools sort -o {0}/donorfull{1}.bam'.format( tmpdir, idx ) )
+          #self.run( 'samtools index {0}/donorfull{1}.bam'.format( tmpdir, idx ) )
+          #self.run( "samtools view -h {0}/donorfull{1}.bam {2} > {0}/donor{1}.sam".format( tmpdir, idx, donor_chromosome ))
+          #self.run( 'samtools view -bhS {0}/donor{1}.sam | samtools sort -o {0}/donor{1}.bam'.format( tmpdir, idx ) )
+          #self.run( 'samtools index {0}/donor{1}.bam'.format( tmpdir, idx ) )
       self.log( 'Stage %i: Donor alignment completed' % stage )
   
-    stage += 1 # 3
+    stage += 1 # start of stage 3
     if start <= stage:
-      self.align( align, reference, fastq, '{0}/reference{1}.sam'.format( tmpdir, idx ) )
+      if reference_chromosome is None:
+        self.align( align, reference, fastq, '{0}/reference{1}.sam'.format( tmpdir, idx ) )
+      else:
+        self.align( align, reference, fastq, '{0}/referencefull{1}.sam'.format( tmpdir, idx ) )
+        self.filter_sam("{0}/reference{1}.sam".format( tmpdir, idx ), '{0}/referencefull{1}.sam'.format( tmpdir, idx ), donor_chromosome)
+        #self.run( 'samtools view -bhS {0}/referencefull{1}.sam | samtools sort -o {0}/referencefull{1}.bam'.format( tmpdir, idx ) )
+        #self.run( 'samtools index {0}/referencefull{1}.bam'.format( tmpdir, idx ) )
+        #self.run( "samtools view -h {0}/referencefull{1}.bam {2} > {0}/reference{1}.sam".format( tmpdir, idx, reference_chromosome ))
+        #self.run( 'samtools view -bhS {0}/reference{1}.sam | samtools sort -o {0}/reference{1}.bam'.format( tmpdir, idx ) )
+        #self.run( 'samtools index {0}/reference{1}.bam'.format( tmpdir, idx ) )
       #self.run( '%s mem -t 8 %s %s > %s/reference%i.sam' % ( BWA_PATH, reference, fastq, tmpdir, idx ) )
       self.log( 'Stage %i: Reference alignment completed' % stage )
   

@@ -35,8 +35,11 @@ if __name__ == '__main__':
   parser.add_argument('--donorsam', required=False, help='specify a previously aligned donor sam')
   parser.add_argument('--remap_donor', required=False, help='donor fasta to remap')
   parser.add_argument('--remap_reference', required=False, help='reference fasta to remap')
+  parser.add_argument('--reference_chromosome', required=False, help='reference chromosome of interest')
+  parser.add_argument('--donor_chromosome', required=False, help='donor chromosome of interest')
+  parser.add_argument('--bed', required=False, help='regions of interest on reference')
   parser.add_argument('fastq', help='fastq files to align')
   args = parser.parse_args()
   # now do each stage...
   calculator = bias.Calculator( BWA_PATH, BOWTIE_PATH, MAUVE_PATH, BAM_TO_SAM, SUBREAD_PATH, sys.stderr, sys.stdout )
-  calculator.calculate( args.donor, args.reference, args.job, args.start, args.tmpdir, args.align, args.donorbam, args.donorsam, args.fastq, args.remap_donor, args.remap_reference )
+  calculator.calculate( args.donor, args.reference, args.job, args.start, args.tmpdir, args.align, args.donorbam, args.donorsam, args.fastq, args.remap_donor, args.remap_reference, args.reference_chromosome, args.donor_chromosome, args.bed )

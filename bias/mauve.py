@@ -121,6 +121,7 @@ class MauveMap( object ):
       writes a sam file with the locations remapped
     '''
     self.stats = { 'total': 0, 'unmapped': 0, 'mapped': 0, 'reads_covered': 0, 'reads_notcovered': 0, 'reads_partial': 0, 'other_chromosome': 0 }
+    pos = 0
     for pos, line in enumerate(sam_fh):
       line = line.strip()
       if line.startswith('@'): # header
